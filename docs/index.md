@@ -1,8 +1,9 @@
 # ZENiX Ringbus Editor
 
 !!! info "Versie"
-    Deze handleiding hoort bij **ZENiX Ringbus Editor 1.1.0**. De code staat in de
-    privé-repo `FreeVN/zenix-ringbus-tool`, tag `editor-v1.1.0`.
+    Deze handleiding hoort bij **ZENiX Ringbus Editor 1.1.1**. De bron staat in
+    deze repo; de exe hangt aan de
+    [releases-pagina](https://github.com/FreeVN/ZENiX-Editor/releases).
 
 !!! tip "Downloaden"
     **Windows-exe**: [ZENiXEditor.exe](https://github.com/FreeVN/ZENiX-Editor/releases)
@@ -34,12 +35,11 @@ honderd kleppen te hernoemen, zones toe te wijzen of adressen na te lopen.
 
 ## Ringbus Editor of Bridge?
 
-| | ZENiX Ringbus Editor | ZENiX Bridge |
-|---|---|---|
-| Vorm | web-UI (Python-service) | desktop-app, CLI, Docker |
-| Bewerken in | de browser, in een tabel | Excel of Google Sheets |
-| Groot project (1000+ elementen) | vlot, met zoeken en filter | vlot, met de vertrouwde spreadsheet |
-| Bestand | `python3 app/web/server.py` | [handleiding](https://freevn.github.io/ZENiX-Bridge/) |
+De editor bewerkt het project **rechtstreeks in de browser**. Wil je liever in
+Excel werken, dan is **ZENiX Bridge** het juiste product: dat converteert
+`.rbtproject` ⇄ Excel. Dat is een **aparte tool** met een eigen repo
+(<https://github.com/FreeVN/ZENiX-Bridge>) en een eigen exe (`ZENiXBridge.exe`) —
+zie de [Bridge-handleiding](https://freevn.github.io/ZENiX-Bridge/).
 
-Beide schrijven enkel de gewijzigde velden terug; de rest van het project blijft
-byte-voor-byte wat het was.
+De editor schrijft enkel de gewijzigde velden terug; de rest van het project
+blijft byte-voor-byte wat het was.

@@ -1,0 +1,5 @@
+# Runtime-dependencies voor de offline ZENiX web-editor (app/web/server.py).
+# Geen internet/CDN nodig: alles wordt lokaal geserveerd.
+fastapi>=0.110
+python-multipart>=0.0.9
+uvicorn>=0.29

@@ -1,31 +1,49 @@
-# ZENiX Ringbus Editor — handleiding
+# ZENiX Ringbus Editor
 
-De handleiding van **ZENiX Ringbus Editor**: een offline web-UI om
-`.rbtproject`-bestanden rechtstreeks in de browser te bewerken — elementen,
-zones, ringen, alarmen en de controlematrix.
+Offline web-UI om een ZENiX-projectbestand (`.rbtproject`, Rf-Technologies
+brandkleppen) rechtstreeks in de browser te bewerken: elementen, zones, ringen,
+alarmen en de controlematrix.
 
-**Lezen kan hier: <https://freevn.github.io/ZENiX-Editor/>**
+**Handleiding: <https://freevn.github.io/ZENiX-Editor/>** ·
+**Download: [releases](https://github.com/FreeVN/ZENiX-Editor/releases)** (`ZENiXEditor.exe`)
 
-## Lokaal bekijken
+Deze repo is **zelfstandig**: bron, handleiding, CI en releases staan hier samen.
+
+> **Ander product:** **ZENiX Bridge** (`.rbtproject` ⇄ Excel) woont in
+> <https://github.com/FreeVN/ZENiX-Bridge> met een eigen exe (`ZENiXBridge.exe`).
+> Niets daarvan hoort in deze repo.
+
+## Wat zit waar
+
+| Pad | Inhoud |
+|---|---|
+| `app/web/server.py` | FastAPI-server: openen, opslaan, downloaden |
+| `app/web/editor.py` | sessiebeheer en de twee-pass save |
+| `app/web/static/` | de UI (HTML, CSS, JS — geen CDN, geen build-stap) |
+| `app/model_service.py` | model-operaties (ringen, zones, alarmen, matrix) |
+| `app/name_validation.py` | vendor-naamregels |
+| `app/core.py` | container-crypto (AES-256-GCM) en vendor-jar-resolutie |
+| `app/java/`, `app/build/` | Java-helper (Java 17) voor het vendor-formaat |
+| `docs/` | de handleiding (MkDocs Material) |
+| `tests/` | pytest-suite |
+
+## Zelf draaien
 
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install -r requirements-docs.txt
-.venv/bin/mkdocs serve
+.venv/bin/pip install -r requirements.txt
+ZENIX_KEY=<64 hex> .venv/bin/python app/web/server.py --port 8800
 ```
 
-## Wat staat waar
+Open <http://localhost:8800>. De vendor-bibliotheek (`configuration-*.jar`,
+`jaxb-api.jar`) zit **niet** in deze repo: die komt uit je RingBus
+Tool-installatie (of `RINGBUSTOOL_HOME`).
 
-| | |
-|---|---|
-| **ZENiX Ringbus Editor** (dit) | web-UI, bewerken in de browser |
-| **ZENiX Bridge** | `.rbtproject` ⇄ Excel, met [eigen handleiding](https://freevn.github.io/ZENiX-Bridge/) |
+## Release bouwen
 
-Deze repo bevat **enkel documentatie**. De code van beide tools staat in de
-privé-repo [FreeVN/zenix-ringbus-tool](https://github.com/FreeVN/zenix-ringbus-tool);
-daar staan ook de releases (`editor-v*` voor de editor, `bridge-v*` voor de Bridge).
+Tag `v*` (bv. `v1.1.1`) → `.github/workflows/build.yml` bouwt `ZENiXEditor.exe` op
+een Windows-runner en zet hem als asset op de release.
 
-> **Verwar de namen niet.** De Bridge converteert naar Excel en heeft
-> `ZENiXBridge.exe` / `ZENiXBridge-linux` / een Docker-image. De Ringbus Editor
-> is een Python-webservice en heeft geen binary — je start hem met `python3
-> app/web/server.py`.
+## Licentie
+
+MIT — zie [LICENSE](LICENSE).

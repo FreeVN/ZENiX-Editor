@@ -1,0 +1,110 @@
+name: build
+
+# Bouwt de ZENiX Ringbus Editor op een Windows-runner en hangt de exe aan de
+# release. Tag `v*` (bv. v1.1.1) = publieke release in DEZE repo.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: "17"}
+
+      - name: JRE (jlink)
+        shell: pwsh
+        run: |
+          jlink --add-modules java.base,java.desktop,java.xml,java.logging,java.naming,java.security.jgss `
+                --strip-debug --no-man-pages --no-header-files --compress=2 --output app/jre
+          ./app/jre/bin/java.exe -version
+
+      - name: Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller cryptography fastapi uvicorn python-multipart
+
+      - name: PyInstaller onefile
+        run: |
+          pyinstaller --noconfirm --clean --onefile --windowed --name ZENiXEditor `
+            --add-data "app/web/static;app/web/static" `
+            --add-data "app/build;app/build" `
+            --add-data "app/jre;app/jre" `
+            --paths app app/web/server.py
+          Get-Item dist/ZENiXEditor.exe | Format-List Name,Length
+
+      - name: Controleer dat de binary geen vendor-jar bevat
+        shell: pwsh
+        run: |
+          $text = [System.Text.Encoding]::Latin1.GetString(
+            [System.IO.File]::ReadAllBytes("dist/ZENiXEditor.exe"))
+          $jars = Get-ChildItem app/lib -Filter *.jar -ErrorAction SilentlyContinue
+          foreach ($jar in $jars) {
+            if ($text.Contains($jar.Name)) {
+              throw "binary bundelt nog steeds $($jar.Name)"
+            }
+          }
+          if (-not $jars) { Write-Host "geen vendor-jar in de repo (verwacht)" }
+
+      - name: Zelftest (enkel met vendor-jar lokaal)
+        shell: pwsh
+        run: |
+          $jars = Get-ChildItem app/lib -Filter *.jar -ErrorAction SilentlyContinue
+          if (-not $jars) {
+            Write-Host "vendor-jar zit niet in deze publieke repo: zelftest overgeslagen"
+            exit 0
+          }
+          $stage = Join-Path $env:RUNNER_TEMP "ringbustool\modules\lib"
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          Copy-Item app/lib/*.jar $stage
+          $env:RINGBUSTOOL_HOME = $env:RUNNER_TEMP
+          $p = Start-Process -FilePath "dist/ZENiXEditor.exe" -ArgumentList "--selftest" -Wait -PassThru
+          Write-Host "exitcode: $($p.ExitCode)"
+          if ($p.ExitCode -ne 0) { throw "zelftest faalde ($($p.ExitCode))" }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: dist/ZENiXEditor.exe
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [windows]
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Publiceer de release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ZENiX Ringbus Editor ${{ github.ref_name }}
+          files: artifacts/windows-exe/ZENiXEditor.exe
+          body: |
+            **ZENiX Ringbus Editor ${{ github.ref_name }}** — offline web-UI voor `.rbtproject`.
+
+            - **Windows 10/11 (x64)**: `ZENiXEditor.exe` — dubbelklikken. De editor
+              start en opent je browser op <http://127.0.0.1:8800/>. Geen installatie,
+              geen Java nodig (de JRE zit erin).
+            - **RingBus Tool is vereist**: de vendor-bibliotheek zit niet in de exe
+              en wordt uit je RingBus Tool-installatie geladen (of via
+              `RINGBUSTOOL_HOME`).
+            - Je projectsleutel hoort in `keys.txt` naast de exe.
+            - Bewerken: elementen, zones, ringen, alarmen en de controlematrix.
+              Alleen gewijzigde velden worden teruggestchreven; de RingBus Tool
+              blijft de eindvalidator.
+            - Handleiding: <https://freevn.github.io/ZENiX-Editor/>
+
+            Dit is de **Editor**. De **ZENiX Bridge** (`.rbtproject` ⇄ Excel) is een
+            apart product met een eigen repo en exe: <https://github.com/FreeVN/ZENiX-Bridge>.

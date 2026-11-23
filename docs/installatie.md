@@ -21,8 +21,8 @@ Ctrl+C of door het venster te sluiten.
 ## Op een Linux-toestel
 
 ```bash
-git clone <code-repo> zenix-ringbus-tool
-cd zenix-ringbus-tool
+git clone https://github.com/FreeVN/ZENiX-Editor.git
+cd ZENiX-Editor
 python3 -m pip install -r app/web/requirements.txt
 python3 app/web/server.py --port 8800
 ```
@@ -57,10 +57,10 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=/opt/zenix-ringbus-tool
-Environment=PYTHONPATH=/opt/zenix-ringbus-tool/app
+WorkingDirectory=/opt/zenix-editor
+Environment=PYTHONPATH=/opt/zenix-editor/app
 Environment=PYTHONUNBUFFERED=1
-ExecStart=/usr/bin/python3 /opt/zenix-ringbus-tool/app/web/server.py --host 0.0.0.0 --port 8800
+ExecStart=/usr/bin/python3 /opt/zenix-editor/app/web/server.py --host 0.0.0.0 --port 8800
 Restart=on-failure
 NoNewPrivileges=true
 PrivateTmp=true

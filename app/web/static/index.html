@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ZENiX Ringbus Editor</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <strong>ZENiX</strong> Ringbus Editor
+      <span class="hint">offline &middot; Ringbus Tool blijft de eindvalidator</span>
+    </div>
+    <div class="open-row">
+      <label class="button" for="file-input">Bestand kiezen</label>
+      <input type="file" id="file-input" accept=".rbtproject" hidden>
+      <input type="text" id="path-input" class="path-input"
+             placeholder="samples/Duizendpoot/Duizendpoot.rbtproject">
+      <button type="button" id="btn-open-path">Openen via pad</button>
+    </div>
+  </header>
+
+  <section class="toolbar" id="toolbar" hidden>
+    <div class="group">
+      <button type="button" id="btn-undo" disabled title="Ctrl+Z">Ongedaan maken</button>
+      <button type="button" id="btn-redo" disabled title="Ctrl+Y">Opnieuw</button>
+    </div>
+    <div class="group">
+      <label class="inline">Zoeken
+        <input type="search" id="filter-input" placeholder="naam, unit-id, omschrijving">
+      </label>
+    </div>
+    <div class="group">
+      <button type="button" id="btn-save" class="primary">Opslaan</button>
+      <button type="button" id="btn-reload">Herladen</button>
+      <button type="button" id="btn-close">Sluiten</button>
+      <span id="dirty" class="dirty hidden">niet opgeslagen</span>
+    </div>
+  </section>
+
+  <main id="workspace" hidden>
+    <section class="panel">
+      <h2>Project</h2>
+      <div class="project-row">
+        <label class="inline">Naam
+          <input type="text" id="project-name" readonly>
+        </label>
+        <span class="muted" id="project-file"></span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Ringen</h2>
+      <table class="rings-table">
+        <thead>
+          <tr><th>id</th><th>naam</th><th>host</th></tr>
+        </thead>
+        <tbody id="rings-body"></tbody>
+      </table>
+      <form id="ring-add-form" class="add-row">
+        <input type="text" id="ring-new-name" placeholder="naam nieuwe ring" required>
+        <input type="text" id="ring-new-host" placeholder="host (leeg = localhost)">
+        <button type="submit">Ring toevoegen</button>
+      </form>
+      <p class="muted">Een ring hernoemen wijzigt de namen van bestaande elementen niet automatisch; hernoem die apart bij de elementen.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Zones</h2>
+      <table class="zones-table">
+        <thead>
+          <tr><th>id</th><th>naam</th><th>omschrijving</th><th></th></tr>
+        </thead>
+        <tbody id="zones-body"></tbody>
+      </table>
+      <form id="zone-add-form" class="add-row">
+        <input type="text" id="zone-new-name" placeholder="naam nieuwe zone" required>
+        <input type="text" id="zone-new-desc" placeholder="omschrijving (optioneel)">
+        <button type="submit">Zone toevoegen</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>Alarmen</h2>
+      <table class="alarms-table">
+        <thead>
+          <tr><th>id</th><th>ring</th><th>naam</th><th>omschrijving</th></tr>
+        </thead>
+        <tbody id="alarms-body"></tbody>
+      </table>
+      <p class="muted scope-note">Alarmen aanmaken, verwijderen of herordenen kan niet in deze editor; alleen naam en omschrijving zijn bewerkbaar.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Controlematrix</h2>
+      <div class="table-wrap matrix-wrap">
+        <table class="matrix-table" id="matrix-table">
+          <thead><tr id="matrix-head"></tr></thead>
+          <tbody id="matrix-body"></tbody>
+        </table>
+      </div>
+      <p class="muted scope-note">Rijen zijn elementen, kolommen zijn alarmen. Een cel is -1 (geen koppeling) of een waarde vanaf 0. Met <strong>Rij op -1</strong> zet je alle cellen van die rij op -1.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Elementen <span class="muted" id="element-count"></span></h2>
+      <div class="bulk-row">
+        <strong>Bulk-hernoemen</strong>
+        <input type="text" id="bulk-search" placeholder="zoek">
+        <input type="text" id="bulk-replace" placeholder="vervang door">
+        <input type="text" id="bulk-prefix" placeholder="prefix">
+        <input type="text" id="bulk-suffix" placeholder="suffix">
+        <label class="inline">nummering vanaf
+          <input type="number" id="bulk-start" placeholder="-" min="0">
+        </label>
+        <button type="button" id="btn-bulk-rename">Hernoem selectie</button>
+        <button type="button" id="btn-delete">Verwijder selectie</button>
+      </div>
+
+      <div class="table-wrap">
+        <table class="elements-table">
+          <thead>
+            <tr>
+              <th class="col-check"><input type="checkbox" id="select-all" title="Alles selecteren"></th>
+              <th>id</th>
+              <th>naam</th>
+              <th>ring</th>
+              <th>unit</th>
+              <th>adres</th>
+              <th>type</th>
+              <th>deviceType</th>
+              <th>unitId</th>
+              <th title="enabled">en.</th>
+              <th title="invert">inv.</th>
+              <th title="normalOpen">n.o.</th>
+              <th>safe</th>
+              <th>alarmfunctie</th>
+              <th>omschrijving</th>
+              <th>zones</th>
+            </tr>
+          </thead>
+          <tbody id="element-body"></tbody>
+        </table>
+      </div>
+      <p class="muted">Sleep een rij binnen dezelfde ring om de volgorde te wijzigen.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Element toevoegen</h2>
+      <form id="element-add-form" class="add-row">
+        <label class="inline">ring <select id="add-ring"></select></label>
+        <label class="inline">unit <input type="number" id="add-unit" min="0" required></label>
+        <label class="inline">adres <input type="number" id="add-address" min="1" required></label>
+        <label class="inline">type <select id="add-type"></select></label>
+        <label class="inline">deviceType <select id="add-device"></select></label>
+        <label class="inline">unitId <input type="text" id="add-unitid"></label>
+        <label class="inline">zones <input type="text" id="add-zones" placeholder="namen of ids, kommagescheiden"></label>
+        <label class="inline">naam <input type="text" id="add-name" placeholder="leeg = vendor-naam"></label>
+        <button type="submit">Toevoegen</button>
+      </form>
+    </section>
+
+    <section class="panel warnings" id="warnings-panel">
+      <h2>Waarschuwingen</h2>
+      <ul id="warnings-list"><li class="muted">Geen waarschuwingen.</li></ul>
+      <p class="muted">Waarschuwingen blokkeren opslaan niet; de Ringbus Tool is de eindvalidator.</p>
+    </section>
+  </main>
+
+  <footer id="statusbar">
+    <span id="status-text">Geen project geopend.</span>
+  </footer>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/static/name_check.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

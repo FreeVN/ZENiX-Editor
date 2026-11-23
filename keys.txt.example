@@ -1,0 +1,5 @@
+# ZENiX Converter - projectsleutels
+# Een hexadecimale sleutel per lijn (64 tekens). Alles achter # is commentaar.
+# De app probeert elke sleutel tot een project opent.
+#
+# 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef

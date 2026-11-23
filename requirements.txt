@@ -1,0 +1,4 @@
+# Runtime-dependencies van de editor (app/web/server.py).
+fastapi>=0.110
+python-multipart>=0.0.9
+uvicorn>=0.29
