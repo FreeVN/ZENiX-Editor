@@ -1,0 +1,64 @@
+# SPDX-License-Identifier: MIT
+# Copyright 2026 Free van Nieuwenhove
+#
+# Handleiding voor eindgebruikers van ZENiX Ringbus Editor.
+# Publiceren gebeurt automatisch: .github/workflows/docs.yml bouwt dit en zet
+# het op GitHub Pages.
+
+site_name: ZENiX Ringbus Editor
+site_description: Handleiding — ZENiX-projectbestanden bewerken in de browser
+site_url: https://freevn.github.io/ZENiX-Editor/
+repo_url: https://github.com/FreeVN/ZENiX-Editor
+repo_name: FreeVN/ZENiX-Editor
+edit_uri: edit/main/docs/
+docs_dir: docs
+copyright: © 2026 Free van Nieuwenhove
+
+theme:
+  name: material
+  language: nl
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: red
+      accent: red
+      toggle:
+        icon: material/weather-night
+        name: Donker
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: red
+      accent: red
+      toggle:
+        icon: material/weather-sunny
+        name: Licht
+  features:
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - toc.follow
+
+nav:
+  - Wat is het: index.md
+  - Installeren: installatie.md
+  - Een project openen: openen.md
+  - Bewerken: bewerken.md
+  - Namen: namen.md
+  - Alarmen en matrix: alarmen.md
+  - Opslaan: opslaan.md
+  - Als het niet werkt: problemen.md
+  - Hoe het werkt: technisch.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+
+extra:
+  generator: false
