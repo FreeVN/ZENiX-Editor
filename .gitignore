@@ -1,2 +1,12 @@
 .venv/
 site/
+__pycache__/
+*.pyc
+.secrets/
+keys.txt
+samples/
+app/lib/*.jar
+app/jre/
+build/
+dist/
+*.spec
