@@ -7,6 +7,6 @@ keys.txt
 samples/
 app/lib/*.jar
 app/jre/
-build/
-dist/
+/build/
+/dist/
 *.spec
