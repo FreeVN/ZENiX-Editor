@@ -1,8 +1,13 @@
 # ZENiX Ringbus Editor
 
 !!! info "Versie"
-    Deze handleiding hoort bij **ZENiX Ringbus Editor 1.0.0**. De code staat in de
-    privé-repo `FreeVN/zenix-ringbus-tool`, tag `editor-v1.0.0`.
+    Deze handleiding hoort bij **ZENiX Ringbus Editor 1.1.0**. De code staat in de
+    privé-repo `FreeVN/zenix-ringbus-tool`, tag `editor-v1.1.0`.
+
+!!! tip "Downloaden"
+    **Windows-exe**: [ZENiXEditor.exe](https://github.com/FreeVN/ZENiX-Editor/releases)
+    — dubbelklikken, browser opent. De RingBus Tool moet geïnstalleerd zijn
+    (vendor-bibliotheek); de rest zit in de exe. Zie [Installeren](installatie.md).
 
 De Ringbus Editor is een **offline web-UI** voor ZENiX-projectbestanden
 (`.rbtproject`, Rf-Technologies brandkleppen). Je opent een project in je browser

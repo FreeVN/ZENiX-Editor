@@ -3,6 +3,21 @@
 De editor is een Python-service. Er is geen build-stap en geen internetverbinding
 nodig tijdens het gebruik: alle bestanden (HTML, CSS, JS) zitten in de repo.
 
+## Op Windows (exe) — aanbevolen
+
+Download `ZENiXEditor.exe` uit de
+[release](https://github.com/FreeVN/ZENiX-Editor/releases) en dubbelklik erop.
+De editor start en opent je browser op <http://127.0.0.1:8800/>. Stoppen met
+Ctrl+C of door het venster te sluiten.
+
+- Geen installatie, geen Java op je systeem: de JRE zit in de exe.
+- **De RingBus Tool moet geïnstalleerd zijn.** De vendor-bibliotheek
+  (`configuration-*.jar`) zit niet in de exe en wordt bij het starten uit die
+  installatie geladen. Staat de RingBus Tool ergens anders, zet dan
+  `RINGBUSTOOL_HOME` naar die map.
+- Je projectsleutel hoort in `keys.txt` naast de exe.
+- Opties: `--port`, `--host`, `--no-browser`, `--selftest`.
+
 ## Op een Linux-toestel
 
 ```bash
