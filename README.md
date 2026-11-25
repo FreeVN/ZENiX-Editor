@@ -39,6 +39,18 @@ Open <http://localhost:8800>. De vendor-bibliotheek (`configuration-*.jar`,
 `jaxb-api.jar`) zit **niet** in deze repo: die komt uit je RingBus
 Tool-installatie (of `RINGBUSTOOL_HOME`).
 
+### Logbestand in windowed mode
+
+De Windows-exe is gebouwd met `--windowed` en heeft geen consolevenster: alle
+uitvoer van de editor (startmelding, uvicorn-info, fouten) gaat naar
+
+    %LOCALAPPDATA%\ZENiXEditor\editor.log
+
+Bestaat `%LOCALAPPDATA%` niet of is de map niet beschrijfbaar, dan valt de editor
+terug op `~/.ZENiXEditor/editor.log` en in het uiterste geval op het
+systeem-`null`-apparaat. Start de exe dus niet? Bekijk eerst dat logbestand.
+Het bestand wordt aangevuld (geen rotatie) en nooit door de editor verwijderd.
+
 ## Release bouwen
 
 Tag `v*` (bv. `v1.1.1`) → `.github/workflows/build.yml` bouwt `ZENiXEditor.exe` op

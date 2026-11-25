@@ -16,6 +16,9 @@ Ctrl+C of door het venster te sluiten.
   installatie geladen. Staat de RingBus Tool ergens anders, zet dan
   `RINGBUSTOOL_HOME` naar die map.
 - Je projectsleutel hoort in `keys.txt` naast de exe.
+- De exe heeft geen consolevenster: alle uitvoer en fouten staan in
+  `%LOCALAPPDATA%\ZENiXEditor\editor.log` (fallback:
+  `~/.ZENiXEditor/editor.log`). Zie [Als het niet werkt](problemen.md).
 - Opties: `--port`, `--host`, `--no-browser`, `--selftest`.
 
 ## Op een Linux-toestel
