@@ -3,6 +3,7 @@
 De test draait offline, zonder subprocess en zonder netwerk. De originelen worden
 altijd in een ``finally`` hersteld, zodat pytest-capture niet beschadigd raakt.
 """
+import importlib
 import logging
 import os
 import sys
@@ -15,6 +16,25 @@ for path in (os.path.join(ROOT, "app"), os.path.join(ROOT, "app", "web")):
         sys.path.insert(0, path)
 
 import server  # noqa: E402
+
+
+def _formatter_from_config(spec):
+    """Bouw een formatter uit een ``build_log_config()``-formatterdict."""
+    name = spec["()"]
+    module_name, _, attr = name.rpartition(".")
+    factory = getattr(importlib.import_module(module_name), attr)
+    kwargs = {key: value for key, value in spec.items() if key != "()"}
+    return factory(**kwargs)
+
+
+def _access_record():
+    """Zoals uvicorn.access hem logt: args bevatten de access-velden."""
+    return logging.LogRecord(
+        "uvicorn.access", logging.INFO, __file__, 1,
+        '%s - "%s %s HTTP/%s" %d',
+        ("127.0.0.1:54321", "GET", "/", "1.1", 200),
+        None,
+    )
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -98,13 +118,17 @@ def test_log_config_avoids_isatty_and_keeps_info(windowed):
     for name in ("default", "access"):
         fmt = config["formatters"][name]
         assert fmt["()"] == "logging.Formatter"
-        assert "DefaultFormatter" not in str(fmt)
+        assert "uvicorn.logging" not in fmt["()"]
+        assert "client_addr" not in fmt["fmt"]
+        assert "request_line" not in fmt["fmt"]
+        assert "status_code" not in fmt["fmt"]
     for handler in config["handlers"].values():
         if "stream" in handler:
             assert handler["stream"] == "ext://sys.stderr"
 
-    # Formatteren mag niet van sys.stdout afhangen (die is hier None).
-    formatter = logging.Formatter(config["formatters"]["default"]["fmt"])
+    # Formatteren mag niet van sys.stdout afhangen (die is hier None) en de
+    # info-regel moet leesbaar blijven.
+    formatter = _formatter_from_config(config["formatters"]["default"])
     record = logging.LogRecord("uvicorn", logging.INFO, __file__, 1, "test", None, None)
     stdout, stderr = sys.stdout, sys.stderr
     try:
@@ -114,6 +138,37 @@ def test_log_config_avoids_isatty_and_keeps_info(windowed):
     finally:
         sys.stdout, sys.stderr = stdout, stderr
     assert "INFO" in text
+    assert "test" in text
+
+
+def test_access_formatter_handles_uvicorn_access_args(windowed):
+    """De access-formatter moet een echte uvicorn-accessrecord formatteren.
+
+    Regressie: velden als ``%(client_addr)s`` bestaan alleen na
+    ``uvicorn.logging.AccessFormatter.formatMessage``; met een gewone
+    ``logging.Formatter`` gaf dat een KeyError per request.
+    """
+    pytest.importorskip("uvicorn")
+
+    config = server.build_log_config()
+    formatter = _formatter_from_config(config["formatters"]["access"])
+    record = _access_record()
+
+    stdout, stderr = sys.stdout, sys.stderr
+    try:
+        sys.stdout = None
+        sys.stderr = None
+        text = formatter.format(record)
+        # logging.Formatter stopt fouten normaal in dit formaat i.p.v. te raisen.
+        assert "Logging error" not in text
+    finally:
+        sys.stdout, sys.stderr = stdout, stderr
+
+    assert "INFO" in text
+    assert "127.0.0.1:54321" in text
+    assert "GET / HTTP/1.1" in text
+    assert " 200" in text
+    assert "---" not in text
 
 
 def test_version_is_exposed_and_pinned_to_release():
