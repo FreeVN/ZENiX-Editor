@@ -92,7 +92,19 @@ jobs:
             Write-Host "GET / -> 200 (poort $port)"
           }
           finally {
-            if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }
+            # onefile-exe = bootloader-ouder + server-child; kill de hele boom.
+            $tree = @()
+            $queue = @($p.Id)
+            while ($queue.Count -gt 0) {
+              $parent = $queue[0]
+              $queue = @($queue | Select-Object -Skip 1)
+              $tree += $parent
+              $children = Get-CimInstance Win32_Process -Filter "ParentProcessId=$parent" -ErrorAction SilentlyContinue
+              foreach ($child in $children) { $queue += [int]$child.ProcessId }
+            }
+            foreach ($pid in $tree) {
+              Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
+            }
           }
 
       - name: Zelftest (enkel met vendor-jar lokaal)

@@ -151,12 +151,6 @@ def index():
     return FileResponse(INDEX, media_type="text/html")
 
 
-@app.get("/api/version")
-def version():
-    """Versie van de editor; gelijk aan de release-tag en ``docs/index.md``."""
-    return {"version": VERSION}
-
-
 @app.post("/api/projects/open")
 async def open_project(request: Request):
     ctype = (request.headers.get("content-type") or "").lower()

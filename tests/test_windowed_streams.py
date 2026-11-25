@@ -4,6 +4,7 @@ De test draait offline, zonder subprocess en zonder netwerk. De originelen worde
 altijd in een ``finally`` hersteld, zodat pytest-capture niet beschadigd raakt.
 """
 import importlib
+import json
 import logging
 import os
 import sys
@@ -171,11 +172,9 @@ def test_access_formatter_handles_uvicorn_access_args(windowed):
     assert "---" not in text
 
 
-def test_version_is_exposed_and_pinned_to_release():
-    """De in-app versie staat op 1.1.2 en is via de API op te vragen."""
+def test_version_is_pinned_to_release(capsys):
+    """De in-app versie staat op 1.1.2 en verschijnt in het selftest-rapport."""
     assert server.VERSION == "1.1.2"
-    testclient = pytest.importorskip("fastapi.testclient")
-    client = testclient.TestClient(server.app)
-    response = client.get("/api/version")
-    assert response.status_code == 200
-    assert response.json() == {"version": "1.1.2"}
+    server.selftest()
+    report = json.loads(capsys.readouterr().out)
+    assert report["version"] == "1.1.2"
