@@ -53,7 +53,7 @@ Het bestand wordt aangevuld (geen rotatie) en nooit door de editor verwijderd.
 
 ## Release bouwen
 
-Tag `v*` (bv. `v1.1.1`) → `.github/workflows/build.yml` bouwt `ZENiXEditor.exe` op
+Tag `v*` (bv. `v1.1.2`) → `.github/workflows/build.yml` bouwt `ZENiXEditor.exe` op
 een Windows-runner en zet hem als asset op de release.
 
 ## Licentie
