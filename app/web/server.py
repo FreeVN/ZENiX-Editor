@@ -41,6 +41,9 @@ app.mount("/static", StaticFiles(directory=editor.STATIC), name="static")
 
 INDEX = os.path.join(editor.STATIC, "index.html")
 
+# Versie van de applicatie; blijft gelijk aan de release-tag (v1.1.2) en de docs.
+VERSION = "1.1.2"
+
 # PyInstaller ``--windowed`` levert geen console: ``sys.stdout``/``sys.stderr``
 # zijn dan ``None`` en elke ``print`` of uvicorn-log zou crashen. De handles
 # hieronder blijven voor de levensduur van het proces open (bewust geen
@@ -93,15 +96,19 @@ def ensure_std_streams():
 
     Retourneert de namen van de streams die in deze aanroep vervangen zijn.
     Bestaande streams blijven ongemoeid en een tweede aanroep doet niets.
+    Ontbreken zowel ``stdout`` als ``stderr``, dan delen ze één handle naar
+    hetzelfde logbestand (geen twee appenders op hetzelfde bestand).
     """
     replaced = []
-    for name in ("stdout", "stderr"):
-        if getattr(sys, name, None) is not None:
-            continue
-        handle = _open_log_stream()
-        if handle is None:
-            continue
-        _FALLBACK_STREAMS.append(handle)
+    missing = [name for name in ("stdout", "stderr")
+               if getattr(sys, name, None) is None]
+    if not missing:
+        return replaced
+    handle = _open_log_stream()
+    if handle is None:
+        return replaced
+    _FALLBACK_STREAMS.append(handle)
+    for name in missing:
         setattr(sys, name, handle)
         replaced.append(name)
     return replaced
@@ -137,6 +144,12 @@ def build_log_config():
 @app.get("/")
 def index():
     return FileResponse(INDEX, media_type="text/html")
+
+
+@app.get("/api/version")
+def version():
+    """Versie van de editor; gelijk aan de release-tag en ``docs/index.md``."""
+    return {"version": VERSION}
 
 
 @app.post("/api/projects/open")
@@ -219,6 +232,7 @@ def selftest():
     """Controleer de omgeving zonder de server te starten (voor CI)."""
     import json
     report = {
+        "version": VERSION,
         "static": os.path.isfile(INDEX),
         "java": None,
         "jars": [],
