@@ -131,9 +131,14 @@ def build_log_config():
         "()": "logging.Formatter",
         "fmt": "%(levelname)s:     %(message)s",
     }
+    # Alleen ``%(message)s``: uvicorn's access-record bevat de regel al als
+    # geformatteerde message. Access-specifieke velden (``client_addr``,
+    # ``request_line``, ``status_code``) bestaan alleen na
+    # ``uvicorn.logging.AccessFormatter.formatMessage``; een gewone Formatter
+    # zou daarop met een KeyError ("--- Logging error ---") stuklopen.
     formatters["access"] = {
         "()": "logging.Formatter",
-        "fmt": '%(levelname)s:     %(client_addr)s - "%(request_line)s" %(status_code)s',
+        "fmt": "%(levelname)s:     %(message)s",
     }
     for handler in config.get("handlers", {}).values():
         if "stream" in handler:
