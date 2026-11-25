@@ -102,8 +102,8 @@ jobs:
               $children = Get-CimInstance Win32_Process -Filter "ParentProcessId=$parent" -ErrorAction SilentlyContinue
               foreach ($child in $children) { $queue += [int]$child.ProcessId }
             }
-            foreach ($pid in $tree) {
-              Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
+            foreach ($procId in $tree) {
+              Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue
             }
           }
 
