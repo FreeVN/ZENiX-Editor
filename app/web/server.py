@@ -16,6 +16,8 @@ Endpoints
 * ``DELETE /api/projects/{sid}``     -> sessie sluiten en tijdelijke map opruimen
 """
 import argparse
+import copy
+import logging
 import os
 import sys
 from urllib.parse import quote
@@ -38,6 +40,98 @@ app = FastAPI(title="ZENiX Ringbus Editor", docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=editor.STATIC), name="static")
 
 INDEX = os.path.join(editor.STATIC, "index.html")
+
+# PyInstaller ``--windowed`` levert geen console: ``sys.stdout``/``sys.stderr``
+# zijn dan ``None`` en elke ``print`` of uvicorn-log zou crashen. De handles
+# hieronder blijven voor de levensduur van het proces open (bewust geen
+# sluiten, geen rotatie: buiten scope).
+LOG_DIR_NAME = "ZENiXEditor"
+LOG_FILE_NAME = "editor.log"
+_FALLBACK_STREAMS = []
+
+
+def log_file_path():
+    """Geef een beschrijfbaar logbestand terug, met fallbacks per platform.
+
+    Volgorde: ``%LOCALAPPDATA%\\ZENiXEditor\\editor.log``, dan
+    ``~/.ZENiXEditor/editor.log`` en ten slotte ``os.devnull``.
+    """
+    candidates = []
+    localappdata = os.environ.get("LOCALAPPDATA", "").strip()
+    if localappdata:
+        candidates.append(os.path.join(localappdata, LOG_DIR_NAME))
+    home = os.path.expanduser("~")
+    if home and home != "~":
+        candidates.append(os.path.join(home, "." + LOG_DIR_NAME))
+    for directory in candidates:
+        try:
+            os.makedirs(directory, exist_ok=True)
+        except OSError:
+            continue
+        path = os.path.join(directory, LOG_FILE_NAME)
+        try:
+            with open(path, "a", encoding="utf-8"):
+                pass
+        except OSError:
+            continue
+        return path
+    return os.devnull
+
+
+def _open_log_stream():
+    """Open een append-stream naar het logbestand (of ``os.devnull``)."""
+    for path in (log_file_path(), os.devnull):
+        try:
+            return open(path, "a", buffering=1, encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+    return None
+
+
+def ensure_std_streams():
+    """Vervang ``None``-streams door een werkende log-stream (idempotent).
+
+    Retourneert de namen van de streams die in deze aanroep vervangen zijn.
+    Bestaande streams blijven ongemoeid en een tweede aanroep doet niets.
+    """
+    replaced = []
+    for name in ("stdout", "stderr"):
+        if getattr(sys, name, None) is not None:
+            continue
+        handle = _open_log_stream()
+        if handle is None:
+            continue
+        _FALLBACK_STREAMS.append(handle)
+        setattr(sys, name, handle)
+        replaced.append(name)
+    return replaced
+
+
+def build_log_config():
+    """uvicorn-logconfig zonder ``DefaultFormatter``/``isatty()``-afhankelijkheid.
+
+    ``uvicorn.config.LOGGING_CONFIG`` gebruikt ``uvicorn.logging.DefaultFormatter``
+    (die ``sys.stdout.isatty()`` aanroept) en streams die in windowed mode
+    ontbreken. We deepcopy'en de config, vervangen de formatters door een gewone
+    ``logging.Formatter`` en richten alle handlers op de gegarandeerde
+    ``sys.stderr``; het info-niveau blijft behouden.
+    """
+    import uvicorn
+
+    config = copy.deepcopy(uvicorn.config.LOGGING_CONFIG)
+    formatters = config.setdefault("formatters", {})
+    formatters["default"] = {
+        "()": "logging.Formatter",
+        "fmt": "%(levelname)s:     %(message)s",
+    }
+    formatters["access"] = {
+        "()": "logging.Formatter",
+        "fmt": '%(levelname)s:     %(client_addr)s - "%(request_line)s" %(status_code)s',
+    }
+    for handler in config.get("handlers", {}).values():
+        if "stream" in handler:
+            handler["stream"] = "ext://sys.stderr"
+    return config
 
 
 @app.get("/")
@@ -148,6 +242,8 @@ def selftest():
 
 
 def main(argv=None):
+    # Eerste statement: in PyInstaller --windowed zijn stdout/stderr None.
+    ensure_std_streams()
     parser = argparse.ArgumentParser(description="ZENiX Ringbus Editor (offline web-UI)")
     parser.add_argument("--port", type=int, default=8800, help="poort (standaard 8800)")
     parser.add_argument("--host", default="127.0.0.1", help="bind-adres (standaard localhost)")
@@ -171,7 +267,8 @@ def main(argv=None):
                                  args.port)
         threading.Timer(1.2, lambda: webbrowser.open(url)).start()
         print("Editor: %s  (Ctrl+C om te stoppen)" % url)
-    uvicorn.run(app, host=args.host, port=args.port, log_level="info")
+    uvicorn.run(app, host=args.host, port=args.port, log_level="info",
+                log_config=build_log_config())
 
 
 if __name__ == "__main__":
