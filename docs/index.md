@@ -1,7 +1,7 @@
 # ZENiX Ringbus Editor
 
 !!! info "Versie"
-    Deze handleiding hoort bij **ZENiX Ringbus Editor 1.1.1**. De bron staat in
+    Deze handleiding hoort bij **ZENiX Ringbus Editor 1.1.2**. De bron staat in
     deze repo; de exe hangt aan de
     [releases-pagina](https://github.com/FreeVN/ZENiX-Editor/releases).
 
