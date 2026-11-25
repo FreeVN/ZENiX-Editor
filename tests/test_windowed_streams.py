@@ -68,6 +68,18 @@ def test_second_call_does_not_replace_again(windowed):
     assert sys.stderr is err
 
 
+def test_one_handle_is_shared_by_stdout_and_stderr(windowed):
+    """Eén append-handle voor hetzelfde logbestand, geen twee appenders."""
+    started = len(server._FALLBACK_STREAMS)
+    sys.stdout = None
+    sys.stderr = None
+
+    server.ensure_std_streams()
+
+    assert sys.stdout is sys.stderr
+    assert len(server._FALLBACK_STREAMS) - started == 1
+
+
 def test_existing_streams_are_untouched(windowed):
     marker_out, marker_err = object(), object()
     sys.stdout, sys.stderr = marker_out, marker_err
@@ -94,4 +106,21 @@ def test_log_config_avoids_isatty_and_keeps_info(windowed):
     # Formatteren mag niet van sys.stdout afhangen (die is hier None).
     formatter = logging.Formatter(config["formatters"]["default"]["fmt"])
     record = logging.LogRecord("uvicorn", logging.INFO, __file__, 1, "test", None, None)
-    assert "INFO" in formatter.format(record)
+    stdout, stderr = sys.stdout, sys.stderr
+    try:
+        sys.stdout = None
+        sys.stderr = None
+        text = formatter.format(record)
+    finally:
+        sys.stdout, sys.stderr = stdout, stderr
+    assert "INFO" in text
+
+
+def test_version_is_exposed_and_pinned_to_release():
+    """De in-app versie staat op 1.1.2 en is via de API op te vragen."""
+    assert server.VERSION == "1.1.2"
+    testclient = pytest.importorskip("fastapi.testclient")
+    client = testclient.TestClient(server.app)
+    response = client.get("/api/version")
+    assert response.status_code == 200
+    assert response.json() == {"version": "1.1.2"}
